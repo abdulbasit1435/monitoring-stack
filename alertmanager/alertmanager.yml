@@ -1,0 +1,12 @@
+route:
+  receiver: default
+  group_by: ["alertname"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  # Alerts are visible in the Alertmanager UI (http://localhost:9093).
+  # To get notifications, add a config here, e.g. email, Slack or a webhook.
+  # Keep real credentials OUT of git (use a local, git-ignored file).
+  - name: default
