@@ -1,47 +1,27 @@
 groups:
-  - name: infrastructure-alerts
+  - name: monitoring_stack_health
     rules:
-      - alert: TargetDown
+      - alert: MonitoringTargetDown
         expr: up == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "Target {{ $labels.job }} is down"
-          description: "{{ $labels.instance }} has been unreachable for more than 1 minute."
+          summary: "Monitoring target is down (instance {{ $labels.instance }})"
+          description: "Target {{ $labels.job }} has been unreachable for more than 1 minute."
 
-      - alert: ContainerDown
-        expr: time() - container_last_seen{name!=""} > 60
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Container {{ $labels.name }} is down"
-          description: "Container {{ $labels.name }} has not been seen for more than 60 seconds."
-
-      - alert: DiskSpaceLow
-        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"}) * 100 < 15
+      - alert: HostDiskFillingUp
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) < 15
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Low disk space on {{ $labels.mountpoint }}"
-          description: "Less than 15% free space left on {{ $labels.mountpoint }}."
+          summary: "Host disk space running low on {{ $labels.instance }}"
+          description: "Available disk space is below 15%."
 
-      - alert: HighMemoryUsage
-        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
-        for: 5m
+      - alert: Watchdog
+        expr: vector(1)
         labels:
-          severity: warning
+          severity: none
         annotations:
-          summary: "High memory usage"
-          description: "Memory usage has been above 85% for more than 5 minutes."
-
-      - alert: HighCPUUsage
-        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High CPU usage"
-          description: "CPU usage has been above 85% for more than 10 minutes."
+          summary: "Watchdog heartbeat signal to confirm alert pipeline is alive."
